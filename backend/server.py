@@ -18,6 +18,7 @@ cursor = db.cursor()
 def home():
     return "AI Based Competitive Exam Preparation Assistant Backend Running"
 
+
 # Register API
 @app.route("/register", methods=["POST"])
 def register():
@@ -32,6 +33,7 @@ def register():
     db.commit()
 
     return jsonify({"message": "User registered successfully"})
+
 
 # Login API
 @app.route("/login", methods=["POST"])
@@ -51,6 +53,8 @@ def login():
     else:
         return jsonify({"message": "Invalid email or password"})
 
+
+# Get Questions API
 @app.route("/questions", methods=["GET"])
 def get_questions():
     cursor.execute("SELECT * FROM questions")
@@ -70,6 +74,9 @@ def get_questions():
         })
 
     return jsonify(result)
+
+
+# Submit Test API
 @app.route("/submit-test", methods=["POST"])
 def submit_test():
     data = request.json
@@ -82,5 +89,41 @@ def submit_test():
     db.commit()
 
     return jsonify({"message": "Test result saved successfully"})
+
+
+# Performance Analysis API (AI-like feature)
+@app.route("/performance/<int:user_id>", methods=["GET"])
+def performance(user_id):
+
+    cursor.execute("SELECT score FROM results WHERE user_id=%s", (user_id,))
+    scores = cursor.fetchall()
+
+    if not scores:
+        return jsonify({"message": "No test records found for this user"})
+
+    total_tests = len(scores)
+
+    total_score = sum([s[0] for s in scores])
+
+    average_score = total_score / total_tests
+
+    if average_score < 4:
+        level = "Beginner"
+        recommendation = "Practice more basic questions"
+    elif average_score < 7:
+        level = "Intermediate"
+        recommendation = "Focus on improving weak topics"
+    else:
+        level = "Advanced"
+        recommendation = "Try advanced level questions"
+
+    return jsonify({
+        "total_tests": total_tests,
+        "average_score": average_score,
+        "performance_level": level,
+        "recommendation": recommendation
+    })
+
+
 if __name__ == "__main__":
     app.run(debug=True)
